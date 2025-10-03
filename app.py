@@ -48,7 +48,7 @@ def analyze_sentiment(message):
         # Construct prompt for Gemini to analyze sentiment in Vietnamese
         prompt = f'''
         Phân tích cảm xúc của câu sau bằng tiếng Việt: "{message}"
-        Xác định cảm xúc là tích cực hay tiêu cực. Trả về chỉ một từ: 'tích cực' hoặc 'tiêu cực'.
+        Xác định xem câu có mang cảm xúc tiêu cực hay không. Trả về chỉ một từ: 'tiêu cực' nếu tiêu cực, 'không' nếu không tiêu cực.
         '''
 
 
