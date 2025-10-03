@@ -53,6 +53,7 @@ def analyze_sentiment(message):
 
 
         response = model.generate_content(prompt)
+        print(response)
         sentiment = response.text.strip().lower()
         return 1 if sentiment == 'tiêu cực' else 0
     except Exception as e:
