@@ -58,11 +58,12 @@ def analyze_sentiment(message):
         - "Sản phẩm rất tốt" → không
         
         Trả về chỉ một từ: 'tiêu cực' hoặc 'không'.
+        ( noted that you must check very care full and the result "tiêu cực" should be rare)
         '''
 
 
         response = model.generate_content(prompt)
-        print(response)
+        print(f"Gemini response for '{message}': {response.text}")
         sentiment = response.text.strip().lower()
         return 1 if sentiment == 'tiêu cực' else 0
     except Exception as e:
