@@ -93,15 +93,30 @@ def check_message():
     result = is_retail_related(message)
     return jsonify({'is_spam': result})
 
+
 @app.route('/check_sentiment', methods=['POST'])
 def check_sentiment():
     data = request.get_json()
-    if not data or 'message' not in data:
-        return jsonify({'error': 'Không có tin nhắn được cung cấp'}), 400
+    if not data:
+        return jsonify({'error': 'Không có dữ liệu được cung cấp'}), 400
     
-    message = data['message']
-    result = analyze_sentiment(message)
-    return jsonify({'is_negative': result})
+    # Handle both single message and list of messages
+    if isinstance(data, list):
+        results = []
+        for item in data:
+            if 'data' not in item:
+                results.append({'error': 'Không có trường "data" trong mục'})
+                continue
+            message = item['data']
+            result = analyze_sentiment(message)
+            results.append({'is_negative': result})
+        return jsonify(results)
+    elif 'message' in data:
+        message = data['message']
+        result = analyze_sentiment(message)
+        return jsonify({'is_negative': result})
+    else:
+        return jsonify({'error': 'Không có tin nhắn được cung cấp'}), 400
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
