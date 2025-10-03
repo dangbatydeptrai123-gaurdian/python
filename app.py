@@ -1,8 +1,14 @@
 from flask import Flask, request, jsonify
 from underthesea import word_tokenize
 import re
+import google.generativeai as genai
 
 app = Flask(__name__)
+
+# Configure Gemini API
+GEMINI_API_KEY = "YOUR_GEMINI_API_KEY"  # Replace with your actual Gemini API key
+genai.configure(api_key=GEMINI_API_KEY)
+model = genai.GenerativeModel('gemini-2.0')  # Adjust to the correct Gemini 2.0 model name
 
 # Vietnamese keywords related to retail problems, including teen code
 RETAIL_KEYWORDS = [
@@ -21,19 +27,6 @@ CONTEXT_KEYWORDS = [
     'check', 'inbox', 'rep', 'rì', 'cmt', 'comment', 'dm'
 ]
 
-# Keywords for sentiment analysis
-POSITIVE_KEYWORDS = [
-    'tốt', 'hài lòng', 'thích', 'tuyệt', 'ok', 'đẹp', 'hay', 'vui',
-    'ổn', 'chất', 'xịn', 'nice', 'yêu', 'perfect', 'rất tốt', 'siêu',
-    'hạnh phúc', 'đỉnh', 'mượt', 'ưng', 'tks', 'thanks', 'cảm ơn'
-]
-
-NEGATIVE_KEYWORDS = [
-    'tệ', 'kém', 'hư', 'lỗi', 'xấu', 'dở', 'chán', 'bực', 'tức',
-    'hỏng', 'khiếu nại', 'phàn nàn', 'trục trặc', 'vấn đề', 'ko', 'không',
-    'fail', 'sucks', 'hok', 'hong', 'tồi', 'quá tệ', 'gay go'
-]
-
 def is_retail_related(message):
     """
     Check if the message is related to retail problems (in Vietnamese) using NLP.
@@ -48,17 +41,36 @@ def is_retail_related(message):
 
 def analyze_sentiment(message):
     """
-    Analyze sentiment of the message (in Vietnamese).
+    Analyze sentiment of the message (in Vietnamese) using Gemini API.
     Returns 0 for positive, 1 for negative.
     """
-    tokens = word_tokenize(message.lower(), format="text").split()
-    positive_score = sum(1 for token in tokens if token in POSITIVE_KEYWORDS)
-    negative_score = sum(1 for token in tokens if token in NEGATIVE_KEYWORDS)
-    
-    # Simple scoring: positive if more positive keywords, negative otherwise
-    if positive_score > negative_score:
-        return 0  # Positive
-    return 1  # Negative (or neutral, default to negative for complaints)
+    try:
+        # Construct prompt for Gemini to analyze sentiment in Vietnamese
+        prompt = f'''
+        Phân tích cảm xúc của câu sau bằng tiếng Việt: "{message}"
+        Xác định cảm xúc là tích cực hay tiêu cực. Trả về chỉ một từ: 'tích cực' hoặc 'tiêu cực'.
+        '''
+
+
+        response = model.generate_content(prompt)
+        sentiment = response.text.strip().lower()
+        return 1 if sentiment == 'tiêu cực' else 0
+    except Exception as e:
+        # Fallback to keyword-based sentiment analysis in case of API failure
+        tokens = word_tokenize(message.lower(), format="text").split()
+        positive_score = sum(1 for token in tokens if token in [
+            'tốt', 'hài lòng', 'thích', 'tuyệt', 'ok', 'đẹp', 'hay', 'vui',
+            'ổn', 'chất', 'xịn', 'nice', 'yêu', 'perfect', 'rất tốt', 'siêu',
+            'hạnh phúc', 'đỉnh', 'mượt', 'ưng', 'tks', 'thanks', 'cảm ơn'
+        ])
+        negative_score = sum(1 for token in tokens if token in [
+            'tệ', 'kém', 'hư', 'lỗi', 'xấu', 'dở', 'chán', 'bực', 'tức',
+            'hỏng', 'khiếu nại', 'phàn nàn', 'trục trặc', 'vấn đề', 'ko', 'không',
+            'fail', 'sucks', 'hok', 'hong', 'tồi', 'quá tệ', 'gay go'
+        ])
+        if positive_score > negative_score:
+            return 0  # Positive
+        return 1  # Negative (or neutral, default to negative for complaints)
 
 @app.route('/check_message', methods=['POST'])
 def check_message():
