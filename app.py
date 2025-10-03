@@ -48,7 +48,16 @@ def analyze_sentiment(message):
         # Construct prompt for Gemini to analyze sentiment in Vietnamese
         prompt = f'''
         Phân tích cảm xúc của câu sau bằng tiếng Việt: "{message}"
-        Xác định xem câu có mang cảm xúc tiêu cực hay không. Trả về chỉ một từ: 'tiêu cực' nếu tiêu cực, 'không' nếu không tiêu cực.
+        Xác định xem tin nhắn này là:
+        - "tiêu cực" nếu là khiếu nại, phàn nàn, không hài lòng về sản phẩm/dịch vụ
+        - "không" nếu là cơ hội bán hàng (hỏi tư vấn, cần sản phẩm, hỏi giá, muốn mua) hoặc cảm xúc tích cực/trung lập
+        
+        Ví dụ:
+        - "Chất lượng kém, tôi muốn khiếu nại" → tiêu cực
+        - "Tôi cần tư vấn về sản phẩm kem dưỡng da giá rẻ" → không (cơ hội bán hàng)
+        - "Sản phẩm rất tốt" → không
+        
+        Trả về chỉ một từ: 'tiêu cực' hoặc 'không'.
         '''
 
 
